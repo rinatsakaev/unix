@@ -12,7 +12,7 @@ for ((i=0;i<3;i++)) do
 done
 
 function setMapState(){
-  map[$1,$2]=$3;
+  map[$(($1-1)),$(($2-1))]=$3;
 }
 
 function checkWinner(){
@@ -118,3 +118,4 @@ while true; do
   	break;
   fi;
 done;
+
