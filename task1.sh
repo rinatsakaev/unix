@@ -5,8 +5,8 @@ if_my_turn=0;
 
 declare -A map;
 
-for ((i=1;i<=3;i++)) do
-    for ((j=1;j<=3;j++)) do
+for ((i=0;i<3;i++)) do
+    for ((j=0;j<3;j++)) do
         map[$i,$j]=".";
     done
 done
@@ -16,48 +16,58 @@ function setMapState(){
 }
 
 function checkWinner(){
-  for ((i=1;i<=3;i++)) do
+  for ((i=0;i<3;i++)) do
       has_winner=1
-      for ((j=2;j<=3;j++)) do
+      for ((j=0;j<2;j++)) do
           if [[ map[$i,$j] == '.' ]]; then
             has_winner=0;
             break;
           fi;
-          if [[ map[$i,$j] != map[$i,$j-1] ]]; then
-            has_winner=0
+          if [[ "echo ${map[$i,$j]}" != "echo ${map[$i,$((j+1))]}" ]]; then
+            has_winner=0;
             break;
           fi;
       done
-      if [[ has_winner == 1 ]]; then
-        echo $map[$i, $j];
-        return;
-      fi;
-    done;
 
-    for ((i=1;i<=3;i++)) do
-        has_winner=1
-        for ((j=2;j<=3;j++)) do
-            if [[ map[$j,$i] == '.' ]]; then
-              has_winner=0;
-              break;
-            fi;
-            if [[ map[$j,$i]!=map[$j-1,$i] ]]; then
-              has_winner=0
-              break;
-            fi;
-        done
-        if [[ has_winner == 1 ]];  then
-          echo $map[$i, $j];
-          return;
+      if [[ ${has_winner} == 1 ]]; then
+      	if [[ "echo ${map[$i,$j]}" == "echo x" ]]; then
+      		return 1;
+        elif [[ "echo ${map[$i,$j]}" == "echo o" ]]; then
+        	return 2;
         fi;
+      fi;
+
     done;
 
-    echo $".";
+    for ((i=0;i<3;i++)) do
+      has_winner=1
+      for ((j=0;j<2;j++)) do
+          if [[ map[$j,$i] == '.' ]]; then
+            has_winner=0;
+            break;
+          fi;
+          if [[ "echo ${map[$j,$i]}" != "echo ${map[$((j+1)),$i]}" ]]; then
+            has_winner=0;
+            break;
+          fi;
+      done
+
+      if [[ ${has_winner} == 1 ]]; then
+      	if [[ "echo ${map[$j,$i]}" == "echo x" ]]; then
+      		return 1;
+        elif [[ "echo ${map[$j,$i]}" == "echo o" ]]; then
+        	return 2;
+        fi;
+      fi;
+
+    done;
+
+    return 0;
 }
 
 function renderMap() {
-  for ((i=1;i<=3;i++)) do
-    echo ${map[$i,1]} ${map[$i,2]} ${map[$i,3]};
+  for ((i=0;i<3;i++)) do
+    echo ${map[$i,0]} ${map[$i,1]} ${map[$i,2]};
   done
 }
 
@@ -84,19 +94,27 @@ while true; do
     echo $position > $pipe;
     is_my_turn=0;
   else
+  	echo "waiting enemy turn";
     read position <$pipe;
     setMapState $position $enemy_figure;
     echo $position;
     is_my_turn=1;
   fi;
   renderMap;
-  winner=$(checkWinner);
-  if [[ $winner == $figure ]]; then
-    echo "you win";
-    return;
+  checkWinner;
+  winner=$?;
+  if [[ "echo ${winner}" == "echo 0" ]]; then
+  	continue;
   fi;
-  if [[ $winner == $enemy_figure ]]; then
-    echo "you loose";
-    return;
+
+  if [[ "echo ${winner}" == "echo 1" && "echo ${figure}" == "echo x" ]]; then
+    echo "you win";
+    break;
+  elif [[ "echo ${winner}" == "echo 2" && "echo ${figure}" == "echo o" ]]; then
+    echo "you win";
+    break;
+  else
+  	echo "you loose";
+  	break;
   fi;
 done;
